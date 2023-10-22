@@ -1,0 +1,4 @@
+.idea
+dbconfig.yml
+config/local.env
+migrations/*
