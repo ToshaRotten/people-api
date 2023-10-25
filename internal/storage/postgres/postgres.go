@@ -31,7 +31,7 @@ func New(config config.Storage) (*Storage, error) {
 func (s *Storage) SavePerson(person person.Person) error {
 	const op = "storage.postgres.SavePerson"
 
-	stmt, err := s.db.Prepare("INSERT INTO persons(name, surname, patronymic, age, sex, nationality_id) VALUES ($1,$2,$3,$4,$5,$6)")
+	stmt, err := s.db.Prepare("INSERT INTO persons(name, surname, patronymic, age, sex, nationality) VALUES ($1,$2,$3,$4,$5,$6)")
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -53,7 +53,7 @@ func (s *Storage) SavePersons(persons []person.Person) error {
 	const op = "storage.postgres.SavePersons"
 
 	for _, p := range persons {
-		stmt, err := s.db.Prepare("INSERT INTO persons(name, surname, patronymic, age, sex, nationality) VALUES (?,?,?,?,?,?)")
+		stmt, err := s.db.Prepare("INSERT INTO persons(name, surname, patronymic, age, sex, nationality) VALUES ($1,$2,$3,$4,$5,$6)")
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
@@ -77,7 +77,7 @@ func (s *Storage) SavePersons(persons []person.Person) error {
 func (s *Storage) DeletePerson(id int64) error {
 	const op = "storage.postgres.DeletePersonById"
 
-	stmt, err := s.db.Prepare("DELETE FROM persons WHERE id = ?")
+	stmt, err := s.db.Prepare("DELETE FROM persons WHERE id = $1")
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -92,7 +92,7 @@ func (s *Storage) DeletePerson(id int64) error {
 func (s *Storage) UpdatePerson(new person.Person, old person.Person) error {
 	const op = "storage.postgres.UpdatePerson"
 
-	stmt, err := s.db.Prepare("UPDATE persons SET name=?, surname=?, patronymic=?, sex=?, nationality_id=?, age=? WHERE id=?")
+	stmt, err := s.db.Prepare("UPDATE persons SET name=?, surname=?, patronymic=?, sex=?, nationality=?, age=? WHERE id=?")
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -115,14 +115,9 @@ func (s *Storage) UpdatePerson(new person.Person, old person.Person) error {
 func (s *Storage) GetPerson(id int) (*person.Person, error) {
 	const op = "storage.postgres.GetPerson"
 
-	row, err := s.db.Query("SELECT (name, surname, patronymic, age, sex, nationality) FROM persons WHERE id = $1", id)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
+	row := s.db.QueryRow("SELECT name, surname, patronymic, age, sex, nationality FROM persons WHERE id = $1", id)
 	var p person.Person
-	err = row.Scan(&p)
-	if err != nil {
+	if err := row.Scan(&p.Name, &p.Surname, &p.Patronymic, &p.Age, &p.Sex, &p.Nationality); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -138,12 +133,12 @@ func (s *Storage) GetCountOfPersons() (int, error) {
 	return count, nil
 }
 
-func (s *Storage) GetPersons(limit int, offset int) (*[]person.Person, error) {
+func (s *Storage) GetPersons(limit int, offset int) ([]person.Person, error) {
 	const op = "storage.postgres.GetPersons"
 
 	rows, err := s.db.Query("SELECT * FROM persons LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return []person.Person{}, fmt.Errorf("%s: %w", op, err)
 	}
 	defer rows.Close()
 
@@ -151,10 +146,10 @@ func (s *Storage) GetPersons(limit int, offset int) (*[]person.Person, error) {
 	for rows.Next() {
 		var p person.Person
 		if err := rows.Scan(&p.Id, &p.Name, &p.Surname, &p.Patronymic, &p.Age, &p.Sex, &p.Nationality); err != nil {
-			return &persons, fmt.Errorf("%s: %w", op, err)
+			return []person.Person{}, fmt.Errorf("%s: %w", op, err)
 		}
 		persons = append(persons, p)
 	}
 
-	return &persons, nil
+	return persons, nil
 }

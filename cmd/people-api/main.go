@@ -5,7 +5,11 @@ import (
 	"net/http"
 	"os"
 	"people-api/internal/config"
+	"people-api/internal/http-server/handlers/person/del"
+	"people-api/internal/http-server/handlers/person/get"
+	get_many "people-api/internal/http-server/handlers/person/get-many"
 	"people-api/internal/http-server/handlers/person/save"
+	save_many "people-api/internal/http-server/handlers/person/save-many"
 	"people-api/internal/http-server/mw"
 	"people-api/internal/storage/postgres"
 	"people-api/utils/extended_slog"
@@ -37,6 +41,10 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/user/save", save.Save(log, storage))
+	mux.HandleFunc("/users/save", save_many.SaveMany(log, storage))
+	mux.HandleFunc("/users/get", get_many.GetMany(log, storage))
+	mux.HandleFunc("/user/get", get.Get(log, storage))
+	mux.HandleFunc("/user/delete", del.Delete(log, storage))
 
 	handler := mw.Logging(mux)
 
