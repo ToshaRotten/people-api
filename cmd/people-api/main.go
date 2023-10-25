@@ -35,15 +35,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = storage
-
 	mux := http.NewServeMux()
-	mux.HandleFunc("/user/save", save.New(log, storage))
+	mux.HandleFunc("/user/save", save.Save(log, storage))
 
 	handler := mw.Logging(mux)
 
-	log.Error("server fail: ", http.ListenAndServe(cfg.HTTPServer.Host+cfg.HTTPServer.Port, handler))
+	srv := http.Server{
+		Addr:         cfg.HTTPServer.Host + ":" + cfg.HTTPServer.Port,
+		Handler:      handler,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.IdleTimeout,
+	}
+
+	log.Error("server stopped: ", srv.ListenAndServe())
 }
+
 func setupLogger(env string) *slog.Logger {
 	var log *slog.Logger
 	switch env {
