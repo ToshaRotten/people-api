@@ -2,8 +2,11 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 	"people-api/internal/config"
+	"people-api/internal/http-server/handlers/person/save"
+	"people-api/internal/http-server/mw"
 	"people-api/internal/storage/postgres"
 	"people-api/utils/extended_slog"
 )
@@ -33,6 +36,13 @@ func main() {
 	}
 
 	_ = storage
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/user/save", save.New(log, storage))
+
+	handler := mw.Logging(mux)
+
+	log.Error("server fail: ", http.ListenAndServe(cfg.HTTPServer.Host+cfg.HTTPServer.Port, handler))
 }
 func setupLogger(env string) *slog.Logger {
 	var log *slog.Logger

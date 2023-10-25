@@ -6,6 +6,7 @@ import (
 	_ "github.com/lib/pq"
 	"people-api/internal/config"
 	"people-api/internal/models/nationality"
+	"people-api/internal/models/person"
 )
 
 type Storage struct {
@@ -40,10 +41,10 @@ func (s *Storage) CheckNationality(nationality nationality.Nationality) (bool, e
 	return hasNat, nil
 }
 
-func (s *Storage) GetNationalityIdByName(name string) (int, error) {
+func (s *Storage) GetNationalityIdByName(name string) (int64, error) {
 	const op = "storage.postgres.GetNationalityIdByName"
 
-	var id int
+	var id int64
 	err := s.db.QueryRow("SELECT id FROM nationality WHERE name=$1", name).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
@@ -52,14 +53,97 @@ func (s *Storage) GetNationalityIdByName(name string) (int, error) {
 	return id, nil
 }
 
-//func (s *Storage) AddNationality(name string) error {
-//
-//}
+func (s *Storage) AddNationality(nat nationality.Nationality) error {
+	const op = "storage.postgres.AddNationality"
 
-//func (s *Storage) SaveUser(user user.User) error {
-//	const op = "storage.postgres.SaveUser"
-//
-//	stmt, err := s.db.Prepare("INSERT INTO users() VALUES (&)")
-//
-//	return nil
-//}
+	err := s.db.QueryRow("INSERT INTO nationalities VALUES ($1)", nat.Name)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) SavePerson(person person.Person) error {
+	const op = "storage.postgres.SavePerson"
+
+	stmt, err := s.db.Prepare("INSERT INTO persons(name, surname, patronymic, age, sex, nationality_id) VALUES (?,?,?,?,?,?)")
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = stmt.Exec(
+		person.Name,
+		person.Surname,
+		person.Patronymic,
+		person.Age,
+		person.Sex,
+		person.Nationality.Id,
+	)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
+func (s *Storage) SavePersons(persons []person.Person) error {
+	const op = "storage.postgres.SavePersons"
+
+	for _, p := range persons {
+		stmt, err := s.db.Prepare("INSERT INTO persons(name, surname, patronymic, age, sex, nationality_id) VALUES (?,?,?,?,?,?)")
+		if err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
+
+		_, err = stmt.Exec(
+			p.Name,
+			p.Surname,
+			p.Patronymic,
+			p.Age,
+			p.Sex,
+			p.Nationality.Id,
+		)
+		if err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Storage) DeletePersonById(id int64) error {
+	const op = "storage.postgres.DeletePersonById"
+
+	stmt, err := s.db.Prepare("DELETE FROM persons WHERE id = ?")
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
+
+func (s *Storage) UpdatePerson(new person.Person, old person.Person) error {
+	const op = "storage.postgres.UpdatePerson"
+
+	stmt, err := s.db.Prepare("UPDATE persons SET name=?, surname=?, patronymic=?, sex=?, nationality_id=?, age=? WHERE id=?")
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = stmt.Exec(
+		new.Name,
+		new.Surname,
+		new.Patronymic,
+		new.Sex,
+		new.Nationality.Id,
+		new.Age,
+		old.Id,
+	)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
