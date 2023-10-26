@@ -5,7 +5,7 @@ type Person struct {
 	Name        string `json:"name"`
 	Surname     string `json:"surname"`
 	Patronymic  string `json:"patronymic"`
-	Age         int8   `json:"age"`
+	Age         int    `json:"age"`
 	Sex         string `json:"sex"`
 	Nationality string `json:"nationality"`
 }
