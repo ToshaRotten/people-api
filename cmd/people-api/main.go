@@ -10,6 +10,7 @@ import (
 	get_many "people-api/internal/http-server/handlers/person/get-many"
 	"people-api/internal/http-server/handlers/person/save"
 	save_many "people-api/internal/http-server/handlers/person/save-many"
+	"people-api/internal/http-server/handlers/person/update"
 	"people-api/internal/http-server/mw"
 	"people-api/internal/storage/postgres"
 	"people-api/utils/extended_slog"
@@ -45,6 +46,7 @@ func main() {
 	mux.HandleFunc("/users/get", get_many.GetMany(log, storage))
 	mux.HandleFunc("/user/get", get.Get(log, storage))
 	mux.HandleFunc("/user/delete", del.Delete(log, storage))
+	mux.HandleFunc("/user/update", update.Update(log, storage))
 
 	handler := mw.Logging(mux)
 
