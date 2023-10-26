@@ -21,7 +21,7 @@ type PersonDeleter interface {
 
 func Delete(log *slog.Logger, personDeleter PersonDeleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.url.get.Get"
+		const op = "handlers.url.Delete"
 		log = log.With(slog.String("op", op))
 
 		var req Request

@@ -23,7 +23,7 @@ type PersonGetter interface {
 
 func Get(log *slog.Logger, personGetter PersonGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.url.get.Get"
+		const op = "handlers.url.Get"
 		log = log.With(slog.String("op", op))
 
 		var req Request
