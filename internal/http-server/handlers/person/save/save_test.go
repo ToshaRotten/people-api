@@ -13,9 +13,9 @@ import (
 func TestSave(t *testing.T) {
 
 	p := person.Person{
-		Name:       "Dmitriy",
-		Surname:    "Ushakov",
-		Patronymic: "Vasilevich",
+		Name:       "Ad",
+		Surname:    "Ad",
+		Patronymic: "Ad",
 	}
 
 	data, err := json.Marshal(p)
