@@ -28,7 +28,7 @@ func New(config config.Storage) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
-func (s *Storage) SavePerson(person person.Person) error {
+func (s *Storage) SavePerson(p person.Person) error {
 	const op = "storage.postgres.SavePerson"
 
 	stmt, err := s.db.Prepare("INSERT INTO persons(name, surname, patronymic, age, sex, nationality) VALUES ($1,$2,$3,$4,$5,$6)")
@@ -37,12 +37,12 @@ func (s *Storage) SavePerson(person person.Person) error {
 	}
 
 	_, err = stmt.Exec(
-		person.Name,
-		person.Surname,
-		person.Patronymic,
-		person.Age,
-		person.Sex,
-		person.Nationality,
+		p.Name,
+		p.Surname,
+		p.Patronymic,
+		p.Age,
+		p.Sex,
+		p.Nationality,
 	)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -92,7 +92,7 @@ func (s *Storage) DeletePerson(id int64) error {
 func (s *Storage) UpdatePerson(new person.Person, old person.Person) error {
 	const op = "storage.postgres.UpdatePerson"
 
-	stmt, err := s.db.Prepare("UPDATE persons SET name=?, surname=?, patronymic=?, sex=?, nationality=?, age=? WHERE id=?")
+	stmt, err := s.db.Prepare("UPDATE persons SET name=$1, surname=$2, patronymic=$3, sex=$4, nationality=$5, age=$6 WHERE id=$7")
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
